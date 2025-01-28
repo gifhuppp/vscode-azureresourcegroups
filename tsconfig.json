@@ -4,27 +4,31 @@
         "target": "es6",
         "outDir": "out",
         "lib": [
-            "es6"
+            "es6",
+            "DOM"
         ],
         "sourceMap": true,
         "rootDir": ".",
+        "strict": true,
         "noUnusedLocals": true,
-        "noImplicitThis": true,
         "noImplicitReturns": true,
-        "strictNullChecks": true,
         "noUnusedParameters": true,
+        "allowSyntheticDefaultImports": true,
         "baseUrl": "./",
         "paths": {
             "*": [
                 "node_modules/@types/*",
                 "*"
-            ]
+            ],
         },
         "skipLibCheck": false
     },
     "exclude": [
         "node_modules",
         ".vscode-test",
-        "gulpfile.ts"
+        "gulpfile.ts",
+        "api/dist",
+        "api/out",
+        "out"
     ]
 }

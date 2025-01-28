@@ -3,15 +3,39 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { AzExtResourceType } from "@microsoft/vscode-azext-utils";
 import { AppResource } from "@microsoft/vscode-azext-utils/hostapi";
+import { extensions } from "vscode";
+import { AzExtResourceType } from "../api/src/index";
 import { localize } from "./utils/localize";
+
+
+/**
+ * This is a temporary function usend to optionaly enable support for MongoClusters in the Azure Resources extension.
+ *
+ * This solution is necessary for a staged release of the MongoClusters feature from the vscode-cosmosdb extension.
+ * It will be removed once the MongoClusters feature is fully released.
+ *
+ * @returns
+ */
+function enableMongoClustersSupport() {
+    const vsCodeCosmosDBConfiguration = extensions.getExtension('ms-azuretools.vscode-cosmosdb')?.packageJSON as ExtensionPackageMongoClustersEnabled;
+    return (vsCodeCosmosDBConfiguration && vsCodeCosmosDBConfiguration.enableMongoClusters);
+}
+
+/**
+ * This is a temporary interface used to enable support for MongoClusters in the Azure Resources extension.
+ * It will be removed once the MongoClusters feature is fully released.
+ */
+interface ExtensionPackageMongoClustersEnabled {
+    readonly enableMongoClusters?: boolean;
+}
 
 export const azureExtensions: IAzExtMetadata[] = [
     {
         name: 'vscode-azurefunctions',
         label: 'Functions',
         resourceTypes: [
+            AzExtResourceType.DurableTaskScheduler,
             AzExtResourceType.FunctionApp
         ],
         tutorial: {
@@ -31,6 +55,14 @@ export const azureExtensions: IAzExtMetadata[] = [
             url: 'https://aka.ms/AAb5dz2'
         },
         reportIssueCommandId: 'appService.ReportIssue'
+    },
+    {
+        name: 'vscode-azurearcenabledmachines',
+        label: 'Azure Arc-enabled machines',
+        resourceTypes: [
+            AzExtResourceType.ArcEnabledMachines
+        ],
+        reportIssueCommandId: 'azureArcEnabledMachines.ReportIssue'
     },
     {
         name: 'vscode-azurestaticwebapps',
@@ -69,11 +101,23 @@ export const azureExtensions: IAzExtMetadata[] = [
     {
         name: 'vscode-cosmosdb',
         label: 'Databases',
-        resourceTypes: [
-            AzExtResourceType.AzureCosmosDb,
-            AzExtResourceType.PostgresqlServersStandard,
-            AzExtResourceType.PostgresqlServersFlexible,
-        ],
+        resourceTypes:
+            /**
+            * This is a temporary interface used to enable support for MongoClusters in the Azure Resources extension.
+            * It will be removed once the MongoClusters feature is fully released.
+            */
+            enableMongoClustersSupport() ?
+                [
+                    AzExtResourceType.AzureCosmosDb,
+                    AzExtResourceType.MongoClusters,
+                    AzExtResourceType.PostgresqlServersStandard,
+                    AzExtResourceType.PostgresqlServersFlexible,
+                ] :
+                [
+                    AzExtResourceType.AzureCosmosDb,
+                    AzExtResourceType.PostgresqlServersStandard,
+                    AzExtResourceType.PostgresqlServersFlexible,
+                ],
         reportIssueCommandId: 'azureDatabases.reportIssue'
     },
     {
@@ -83,17 +127,67 @@ export const azureExtensions: IAzExtMetadata[] = [
             AzExtResourceType.ContainerAppsEnvironment,
         ],
         reportIssueCommandId: 'containerApps.reportIssue'
-    }
+    },
+    {
+        name: 'vscode-azurespringcloud',
+        publisher: 'vscjava',
+        label: 'Spring Apps',
+        resourceTypes: [
+            AzExtResourceType.SpringApps,
+        ],
+        reportIssueCommandId: 'springApps.reportIssue'
+    },
+    {
+        name: 'vscode-azurelogicapps',
+        publisher: 'ms-azuretools',
+        label: 'Logic Apps',
+        resourceTypes: [
+            AzExtResourceType.LogicApp,
+        ],
+        tutorial: {
+            label: localize('createLogicApp', 'Create a standard logic app'),
+            url: 'https://aka.ms/lalearn'
+        },
+        reportIssueCommandId: 'azureLogicAppsStandard.reportIssue'
+    },
+    {
+        name: 'vscode-azurewebpubsub',
+        label: 'Web PubSub',
+        resourceTypes: [
+            AzExtResourceType.WebPubSub
+        ],
+        reportIssueCommandId: 'azureWebPubSub.reportIssue'
+    },
+    {
+        name: 'vscode-azureresourcegroups',
+        label: 'Managed Identity',
+        resourceTypes: [
+            AzExtResourceType.ManagedIdentityUserAssignedIdentities
+        ]
+    },
+    {
+        name: 'vscode-ai-foundry',
+        publisher: 'ms-toolsai',
+        label: 'AI Foundry',
+        resourceTypes: [AzExtResourceType.AiFoundry],
+        reportIssueCommandId: 'azure-ai-extension.reportIssue',
+        private: true
+    },
 ];
 
 export const legacyTypeMap: Partial<Record<AzExtResourceType, string>> = {
+    AiFoundry: 'microsoft.machinelearningservices/workspaces',
+    DurableTaskScheduler: 'microsoft.durabletask/schedulers',
     FunctionApp: 'microsoft.web/functionapp',
     AppServices: 'microsoft.web/sites',
     StaticWebApps: 'microsoft.web/staticsites',
     VirtualMachines: 'microsoft.compute/virtualmachines',
     AzureCosmosDb: 'microsoft.documentdb/databaseaccounts',
+    MongoClusters: 'microsoft.documentdb/mongoclusters',
     PostgresqlServersStandard: 'microsoft.dbforpostgresql/servers',
-    PostgresqlServersFlexible: 'microsoft.dbforpostgresql/flexibleservers'
+    PostgresqlServersFlexible: 'microsoft.dbforpostgresql/flexibleservers',
+    SpringApps: 'microsoft.appplatform/spring',
+    WebPubSub: 'microsoft.signalrservice/webpubsub'
 }
 
 export interface IAzExtMetadata {
@@ -103,6 +197,7 @@ export interface IAzExtMetadata {
     resourceTypes: AzExtResourceType[];
     tutorial?: IAzExtTutorial;
     reportIssueCommandId?: string;
+    private?: boolean;
 }
 
 export interface IAzExtResourceType {

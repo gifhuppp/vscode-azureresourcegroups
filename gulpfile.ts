@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { gulp_installAzureAccount, gulp_webpack } from '@microsoft/vscode-azext-dev';
-import * as fse from 'fs-extra';
+import { gulp_webpack } from '@microsoft/vscode-azext-dev';
+import * as fs from 'fs/promises';
 import * as gulp from 'gulp';
 import * as path from 'path';
 
@@ -12,23 +12,23 @@ declare let exports: { [key: string]: unknown };
 
 async function prepareForWebpack(): Promise<void> {
     const mainJsPath: string = path.join(__dirname, 'main.js');
-    let contents: string = (await fse.readFile(mainJsPath)).toString();
+    let contents: string = (await fs.readFile(mainJsPath)).toString();
     contents = contents
         .replace('out/src/extension', 'dist/extension.bundle')
         .replace(', true /* ignoreBundle */', '');
-    await fse.writeFile(mainJsPath, contents);
+    await fs.writeFile(mainJsPath, contents);
 }
 
 async function listIcons(): Promise<void> {
     const rootPath: string = path.join(__dirname, 'resources', 'providers');
-    const subDirs: string[] = (await fse.readdir(rootPath)).filter(dir => dir.startsWith('microsoft.'));
+    const subDirs: string[] = (await fs.readdir(rootPath)).filter(dir => dir.startsWith('microsoft.'));
     while (true) {
         const subDir: string | undefined = subDirs.pop();
         if (!subDir) {
             break;
         } else {
             const subDirPath: string = path.join(rootPath, subDir);
-            const paths: string[] = await fse.readdir(subDirPath);
+            const paths: string[] = await fs.readdir(subDirPath);
             for (const p of paths) {
                 const subPath: string = path.posix.join(subDir, p);
                 if (subPath.endsWith('.svg')) {
@@ -43,13 +43,12 @@ async function listIcons(): Promise<void> {
 
 async function cleanReadme(): Promise<void> {
     const readmePath: string = path.join(__dirname, 'README.md');
-    let data: string = (await fse.readFile(readmePath)).toString();
+    let data: string = (await fs.readFile(readmePath)).toString();
     data = data.replace(/<!-- region exclude-from-marketplace -->.*?<!-- endregion exclude-from-marketplace -->/gis, '');
-    await fse.writeFile(readmePath, data);
+    await fs.writeFile(readmePath, data);
 }
 
 exports['webpack-dev'] = gulp.series(prepareForWebpack, () => gulp_webpack('development'));
 exports['webpack-prod'] = gulp.series(prepareForWebpack, () => gulp_webpack('production'));
-exports.preTest = gulp_installAzureAccount;
 exports.listIcons = listIcons;
 exports.cleanReadme = cleanReadme;

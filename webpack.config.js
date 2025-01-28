@@ -14,9 +14,13 @@ const dev = require("@microsoft/vscode-azext-dev");
 
 let DEBUG_WEBPACK = !/^(false|0)?$/i.test(process.env.DEBUG_WEBPACK || '');
 
-let config = dev.getDefaultWebpackConfig({
+const config = dev.getDefaultWebpackConfig({
     projectRoot: __dirname,
     verbosity: DEBUG_WEBPACK ? 'debug' : 'normal',
+    entries: {
+        // required for cloud shell feature
+        cloudConsoleLauncher: './src/cloudConsole/cloudShellChildProcess/cloudConsoleLauncher.ts',
+    },
     externals:
     {
         // Fix "Module not found" errors in ./node_modules/websocket/lib/{BufferUtil,Validation}.js
@@ -26,11 +30,18 @@ let config = dev.getDefaultWebpackConfig({
         '../build/default/validation': 'commonjs ../build/default/validation',
         '../build/Release/bufferutil': 'commonjs ../build/Release/bufferutil',
         '../build/default/bufferutil': 'commonjs ../build/default/bufferutil',
-    }
+
+        // required for cloud shell feature
+        bufferutil: 'commonjs bufferutil',
+        'utf-8-validate': 'commonjs utf-8-validate',
+        './platform/openbsd': 'commonjs copy-paste-openbsd',
+    },
+    target: 'node',
+    suppressCleanDistFolder: true,
 });
 
 if (DEBUG_WEBPACK) {
     console.log('Config:', config);
 }
 
-module.exports = config;
+module.exports = [config];

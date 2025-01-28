@@ -3,15 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ResourceManagementClient } from '@azure/arm-resources';
-import { getResourceGroupFromId, uiUtils } from '@microsoft/vscode-azext-azureutils';
-import { AzExtResourceType, IActionContext, nonNullProp, TreeItemIconPath } from '@microsoft/vscode-azext-utils';
-import { AppResource, GroupingConfig, GroupNodeConfiguration } from '@microsoft/vscode-azext-utils/hostapi';
-import * as path from 'path';
-import { ThemeIcon } from 'vscode';
+import { getResourceGroupFromId } from '@microsoft/vscode-azext-azureutils';
+import { nonNullProp } from '@microsoft/vscode-azext-utils';
+import { AppResource, GroupNodeConfiguration, GroupingConfig } from '@microsoft/vscode-azext-utils/hostapi';
+import { ThemeIcon, Uri } from 'vscode';
+import { URI, Utils } from 'vscode-uri';
+import { AzExtResourceType } from '../../api/src/index';
 import { IAzExtMetadata, legacyTypeMap } from '../azureExtensions';
-import { ext } from '../extensionVariables';
-import { createResourceClient } from './azureClients';
 import { localize } from './localize';
 import { treeUtils } from './treeUtils';
 
@@ -37,7 +35,7 @@ export function createGroupConfigFromResource(resource: AppResource, subscriptio
             contextValuesToAdd: ['azureResourceTypeGroup', ...(resource.azExtResourceType ? [resource.azExtResourceType, legacyTypeMap[resource.azExtResourceType] ?? ''] : [])]
         },
         location: {
-            id: `${subscriptionId}/location/${resource.location}` ?? 'unknown',
+            id: `${subscriptionId}/location/${resource.location}`,
             label: resource.location ?? unknown,
             icon: new ThemeIcon('globe'),
             contextValuesToAdd: ['azureLocationGroup']
@@ -72,21 +70,14 @@ export function createAzureExtensionsGroupConfig(extensions: IAzExtMetadata[], s
     return azExtGroupConfigs;
 }
 
-export function getIconPath(azExtResourceType?: AzExtResourceType): TreeItemIconPath {
-    return treeUtils.getIconPath(azExtResourceType ? path.join('azureIcons', azExtResourceType) : 'resource');
+export function getIconPath(azExtResourceType?: AzExtResourceType): Uri {
+    return treeUtils.getIconPath(azExtResourceType ?
+        Utils.joinPath(URI.file('azureIcons'), azExtResourceType).path :
+        URI.file('resource').path);
 }
 
-export async function getArmTagKeys(context: IActionContext): Promise<Set<string>> {
-    const armTagKeys: Set<string> = new Set();
-    for (const sub of (await ext.rootAccountTreeItem.getCachedChildren(context))) {
-        const client: ResourceManagementClient = await createResourceClient([context, sub]);
-        const tags = await uiUtils.listAllIterator(client.tagsOperations.list());
-        for (const tag of tags) {
-            tag.tagName ? armTagKeys.add(tag.tagName) : undefined;
-        }
-    }
-
-    return armTagKeys;
+export function getName(azExtResourceType?: AzExtResourceType): string | undefined {
+    return azExtResourceType ? azExtDisplayInfo[azExtResourceType]?.displayName : undefined;
 }
 
 interface AzExtResourceTypeDisplayInfo {
@@ -94,21 +85,26 @@ interface AzExtResourceTypeDisplayInfo {
 }
 
 const azExtDisplayInfo: Partial<Record<AzExtResourceType, AzExtResourceTypeDisplayInfo>> = {
+    AiFoundry: { displayName: localize('aiFoundry', 'AI Foundry') },
     ApplicationInsights: { displayName: localize('insightsComponents', 'Application Insights') },
     AppServiceKubernetesEnvironment: { displayName: localize('containerService', 'App Service Kubernetes Environment') },
     AppServicePlans: { displayName: localize('serverFarms', 'App Service plans') },
     AppServices: { displayName: localize('webApp', 'App Services') },
+    ArcEnabledMachines: { displayName: localize('arcEnabledMachines', 'Azure Arc-enabled machines') },
     AvailabilitySets: { displayName: localize('availabilitySets', 'Availability sets') },
     AzureCosmosDb: { displayName: localize('documentDB', 'Azure Cosmos DB') },
     BatchAccounts: { displayName: localize('batchAccounts', 'Batch accounts') },
     ContainerAppsEnvironment: { displayName: localize('containerAppsEnv', 'Container Apps') },
     ContainerRegistry: { displayName: localize('containerRegistry', 'Container registry') },
     Disks: { displayName: localize('disks', 'Disks') },
+    DurableTaskScheduler: { displayName: localize('durableTaskScheduler', 'Durable Task Scheduler') },
     FrontDoorAndCdnProfiles: { displayName: localize('frontDoorAndcdnProfiles', 'Front Door and CDN profiles') },
     FunctionApp: { displayName: localize('functionApp', 'Function App') },
     Images: { displayName: localize('images', 'Images') },
     LoadBalancers: { displayName: localize('loadBalancers', 'Load balancers') },
     LogicApp: { displayName: localize('logicApp', 'Logic App') },
+    ManagedIdentityUserAssignedIdentities: { displayName: localize('managedIdentity', 'Managed Identities') },
+    MongoClusters: { displayName: localize('mongoclusters', 'Azure Cosmos DB for MongoDB (vCore)') },
     MysqlServers: { displayName: localize('mysqlServers', 'MySql servers') },
     NetworkInterfaces: { displayName: localize('networkInterfaces', 'Network interfaces') },
     NetworkSecurityGroups: { displayName: localize('networkSecurityGroups', 'Network security groups') },
@@ -118,6 +114,7 @@ const azExtDisplayInfo: Partial<Record<AzExtResourceType, AzExtResourceTypeDispl
     PostgresqlServersFlexible: { displayName: localize('postgreSqlServers', 'PostgreSQL servers (Flexible)') },
     PostgresqlServersStandard: { displayName: localize('postgreSqlServers', 'PostgreSQL servers (Standard)') },
     PublicIpAddresses: { displayName: localize('publicIpAddresses', 'Public IP addresses') },
+    SpringApps: { displayName: localize('springApps', 'Spring Apps') },
     SqlDatabases: { displayName: localize('sqlDatabases', 'SQL databases') },
     SqlServers: { displayName: localize('sqlServers', 'SQL servers') },
     StaticWebApps: { displayName: localize('staticWebApp', 'Static Web Apps') },
@@ -125,4 +122,5 @@ const azExtDisplayInfo: Partial<Record<AzExtResourceType, AzExtResourceTypeDispl
     VirtualMachines: { displayName: localize('virtualMachines', 'Virtual machines') },
     VirtualMachineScaleSets: { displayName: localize('virtualMachineScaleSets', 'Virtual machine scale sets') },
     VirtualNetworks: { displayName: localize('virtualNetworks', 'Virtual networks') },
+    WebPubSub: { displayName: localize('webPubSub', 'Web PubSub') }
 }

@@ -25,7 +25,8 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}"
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurestorage",
             ],
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
@@ -34,6 +35,22 @@
             "env": {
                 "DEBUGTELEMETRY": "v",
                 "NODE_DEBUG": ""
+            }
+        },
+        {
+            "name": "Launch Extension (web)",
+            "type": "extensionHost",
+            "debugWebWorkerHost": true,
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionDevelopmentKind=web"
+            ],
+            "env": {
+                "DEBUGTELEMETRY": "v",
+                "NODE_DEBUG": "",
+                "DEBUG_WEBPACK": "1"
             }
         },
         {
@@ -49,7 +66,9 @@
                 "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurevirtualmachines",
                 "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azureappservice",
                 "--extensionDevelopmentPath=${workspaceFolder}/../vscode-cosmosdb",
-                "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurecontainerapps"
+                "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurecontainerapps",
+                "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurespringcloud",
+                "--extensionDevelopmentPath=${workspaceFolder}/../vscode-azurelogicapps"
             ],
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
@@ -97,7 +116,7 @@
                 "MOCHA_timeout": "0", // Disable time-outs
                 "DEBUGTELEMETRY": "v",
                 "NODE_DEBUG": "",
-                "ENABLE_LONG_RUNNING_TESTS": ""
+                "AzCode_EnableLongRunningTestsLocal": ""
             }
         },
         {

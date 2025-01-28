@@ -3,14 +3,31 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IActionContext, openReadOnlyJson } from '@microsoft/vscode-azext-utils';
-import { pickAppResource } from '../api/pickAppResource';
-import { AppResourceTreeItem } from '../tree/AppResourceTreeItem';
+import { azureResourceExperience, IActionContext, openReadOnlyJson } from '@microsoft/vscode-azext-utils';
+import { v4 as uuidv4 } from "uuid";
+import { ViewPropertiesModel, ViewPropertiesModelAsync } from '../../api/src/index';
+import { ext } from '../extensionVariables';
+import { ResourceGroupsItem } from '../tree/ResourceGroupsItem';
+import { localize } from '../utils/localize';
 
-export async function viewProperties(context: IActionContext, node?: AppResourceTreeItem): Promise<void> {
+export async function viewProperties(context: IActionContext, node?: ResourceGroupsItem): Promise<void> {
     if (!node) {
-        node = await pickAppResource<AppResourceTreeItem>(context);
+        node = await azureResourceExperience<ResourceGroupsItem>({ ...context, dontUnwrap: true }, ext.v2.api.resources.azureResourceTreeDataProvider);
     }
 
-    await openReadOnlyJson(node, node.data);
+    if (!hasViewProperties(node)) {
+        throw new Error(localize('commands.viewProperties.noProperties', 'The selected resource has no properties to view.'));
+    }
+
+    // support both async and sync viewProperties models
+    const data = isAsyncViewPropertiesModel(node.viewProperties) ? await node.viewProperties.getData() : node.viewProperties.data;
+    await openReadOnlyJson({ fullId: node.id ?? uuidv4(), label: node.viewProperties.label }, data);
+}
+
+export function hasViewProperties(node: unknown): node is { viewProperties: ViewPropertiesModel } {
+    return !!(node as { viewProperties: ViewPropertiesModel })?.viewProperties;
+}
+
+function isAsyncViewPropertiesModel(viewProperties: ViewPropertiesModel): viewProperties is ViewPropertiesModel & ViewPropertiesModelAsync {
+    return 'getData' in viewProperties;
 }
